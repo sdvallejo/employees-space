@@ -1,18 +1,114 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="row">
+
+    <sidebar></sidebar>
+
+    <div class="col-md-8">
+
+      <h1 class="my-4">
+        <router-link to="/">My space</router-link>
+        <small v-if="posts.length > 0">({{ posts.length }} posts published)</small>
+      </h1>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="card-title">New post</h2>
+
+          <div class="alert alert-danger w-100" v-if="error">{{ error }}</div>
+          <div class="alert alert-success w-100" v-if="success">{{ success }}</div>
+
+          <form @submit.stop.prevent="submitPost">
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input type="text" class="form-control" id="title" v-model="newPost.title">
+            </div>
+
+            <div class="form-group">
+              <label for="body">Body</label>
+              <textarea class="form-control" id="body" rows="3" v-model="newPost.body"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary float-right">Submit</button>
+          </form>
+
+        </div>
+      </div>
+
+      <posts-list :posts="posts"></posts-list>
+
+    </div>
   </div>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue';
+import Vue from 'vue';
+import axios from 'axios';
+import Sidebar from '@/components/home/Sidebar.vue';
+import PostsList from '@/components/home/PostsList.vue';
 
 export default {
   name: 'home',
+  data() {
+    return {
+      posts: [],
+      error: null,
+      success: null,
+      newPost: {
+        title: '',
+        body: '',
+      },
+    };
+  },
   components: {
-    HelloWorld,
+    Sidebar,
+    PostsList,
+  },
+  created() {
+    if (this.user) {
+      this.getPosts();
+    }
+  },
+  methods: {
+    getPosts() {
+      const cachebuster = Math.round(new Date().getTime() / 1000);
+      const url = `http://jsonplaceholder.typicode.com/posts?userId=${this.user.id}&c=${cachebuster}`;
+      axios.get(url).then(({ data }) => {
+        Vue.set(this, 'posts', data);
+      });
+    },
+    submitPost() {
+      if (this.title === '' || this.body === '') {
+        this.error = 'Title and body are required.';
+        return;
+      }
+
+      this.error = null;
+
+      const url = 'http://jsonplaceholder.typicode.com/posts';
+      const post = {
+        ...this.newPost,
+        userId: this.user.id,
+      };
+
+      axios.post(url, post)
+        .then(() => {
+          this.success = 'Post created.';
+          this.getPosts();
+        })
+        .catch(() => {
+          this.error = 'HTTP error.';
+        });
+
+      Vue.set(this, 'newPost', {
+        title: '',
+        body: '',
+      });
+    },
+  },
+  computed: {
+    user() {
+      return this.$store.state.user;
+    },
   },
 };
 </script>
