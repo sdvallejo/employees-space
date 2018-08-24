@@ -15,14 +15,15 @@
     <div v-if="showComments">
       <h4>Comments</h4>
 
-      <comments-list :comments="comments"></comments-list>
+      <comments-list :comments="comments" v-show="!loading"></comments-list>
+      <pulse-loader v-show="loading"></pulse-loader>
     </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue';
 import CommentsList from '@/components/posts/CommentsList.vue';
 
 export default {
@@ -33,6 +34,7 @@ export default {
   },
   components: {
     CommentsList,
+    PulseLoader,
   },
   data() {
     return {
@@ -44,9 +46,11 @@ export default {
   },
   methods: {
     getComments() {
+      this.loading = true;
       const url = `http://jsonplaceholder.typicode.com/posts/${this.post.id}/comments`;
       axios.get(url).then(({ data }) => {
         this.comments = data;
+        this.loading = false;
       });
     },
   },

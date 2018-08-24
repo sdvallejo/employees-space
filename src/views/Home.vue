@@ -34,7 +34,8 @@
         </div>
       </div>
 
-      <posts-list :posts="posts"></posts-list>
+      <posts-list :posts="posts" v-show="!loading"></posts-list>
+      <pulse-loader v-show="loading"></pulse-loader>
 
     </div>
   </div>
@@ -43,6 +44,7 @@
 <script>
 import Vue from 'vue';
 import axios from 'axios';
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue';
 import Sidebar from '@/components/home/Sidebar.vue';
 import PostsList from '@/components/home/PostsList.vue';
 
@@ -53,6 +55,7 @@ export default {
       posts: [],
       error: null,
       success: null,
+      loading: false,
       newPost: {
         title: '',
         body: '',
@@ -62,6 +65,7 @@ export default {
   components: {
     Sidebar,
     PostsList,
+    PulseLoader,
   },
   created() {
     if (this.user) {
@@ -70,10 +74,12 @@ export default {
   },
   methods: {
     getPosts() {
+      this.loading = true;
       const cachebuster = Math.round(new Date().getTime() / 1000);
       const url = `http://jsonplaceholder.typicode.com/posts?userId=${this.user.id}&c=${cachebuster}`;
       axios.get(url).then(({ data }) => {
         Vue.set(this, 'posts', data);
+        this.loading = false;
       });
     },
     submitPost() {
@@ -91,9 +97,9 @@ export default {
       };
 
       axios.post(url, post)
-        .then(() => {
+        .then(({ data }) => {
           this.success = 'Post created.';
-          this.getPosts();
+          this.posts.unshift(data);
         })
         .catch(() => {
           this.error = 'HTTP error.';
