@@ -19,7 +19,7 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    initUser({ commit, dispatch }) {
+    initUser({ dispatch }) {
       const username = localStorage.getItem('user');
       if (!username) {
         return Promise.reject();
@@ -28,22 +28,20 @@ export default new Vuex.Store({
       return dispatch('login', username);
     },
     login({ commit }, username) {
-      const p = new Promise((resolve, reject) => {
-        axios
-          .get(`https://jsonplaceholder.typicode.com/users?username=${username}`)
-          .then(({ data }) => {
-            if (data.length < 1) {
-              reject(new Error("The user doesn't exist."));
-              return;
-            }
+      const p = new Promise(async (resolve, reject) => {
+        try {
+          const { data } = await axios.get(`https://jsonplaceholder.typicode.com/users?username=${username}`);
+          if (data.length < 1) {
+            reject(new Error("The user doesn't exist."));
+            return;
+          }
 
-            const user = data[0];
-            commit('storeUser', user);
-            resolve();
-          })
-          .catch(() => {
-            reject(new Error('HTTP Error.'));
-          });
+          const user = data[0];
+          commit('storeUser', user);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
       });
 
       return p;

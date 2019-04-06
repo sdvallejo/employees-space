@@ -1,18 +1,17 @@
 <template>
-    <div class="row">
+  <div class="row">
+    <sidebar></sidebar>
 
-        <sidebar></sidebar>
+    <div class="col-md-8">
+      <h1 class="my-4">
+        <router-link to="/">My space</router-link>
+      </h1>
 
-        <div class="col-md-8">
+      <div class="alert alert-danger" v-if="error">{{ error }}</div>
 
-            <h1 class="my-4">
-                <router-link to="/">My space</router-link>
-            </h1>
-
-            <post :post="post" :show-comments="true" v-if="post"></post>
-
-        </div>
+      <post :post="post" :show-comments="true" v-if="post"></post>
     </div>
+  </div>
 </template>
 
 <script>
@@ -26,11 +25,19 @@ export default {
     return {
       id: this.$route.params.id,
       post: null,
+      error: null,
     };
   },
   components: {
     Post,
     Sidebar,
+  },
+  watch: {
+    $route(to) {
+      this.id = to.params.id;
+      this.post = null;
+      this.getPost();
+    },
   },
   created() {
     if (this.user) {
@@ -38,11 +45,14 @@ export default {
     }
   },
   methods: {
-    getPost() {
+    async getPost() {
       const url = `http://jsonplaceholder.typicode.com/posts/${this.id}`;
-      axios.get(url).then(({ data }) => {
+      try {
+        const { data } = await axios.get(url);
         this.post = data;
-      });
+      } catch (e) {
+        this.error = e.message;
+      }
     },
   },
   computed: {

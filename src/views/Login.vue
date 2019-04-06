@@ -2,24 +2,29 @@
   <div class="row">
     <div class="col-4 offset-4">
       <div class="card mt-5">
-        <div class="card-header">
-          Sign In
-        </div>
+        <div class="card-header">Sign In</div>
         <div class="card-body">
           <form role="form" @submit.stop.prevent="onSubmit">
-
-            <div class="alert alert-danger" v-show="error">
-              {{ error }}
-            </div>
+            <div class="alert alert-danger" v-show="error">{{ error }}</div>
 
             <fieldset>
               <div class="form-group">
-                <input class="form-control" placeholder="User" type="text" autofocus v-model="username">
+                <input
+                  class="form-control"
+                  placeholder="User"
+                  type="text"
+                  autofocus
+                  v-model="username"
+                >
               </div>
-              <input class="btn btn-lg btn-success btn-block" type="submit" value="Login" v-if="!loading" />
+              <input
+                class="btn btn-lg btn-success btn-block"
+                type="submit"
+                value="Login"
+                v-if="!loading"
+              >
               <pulse-loader v-else></pulse-loader>
             </fieldset>
-
           </form>
         </div>
       </div>
@@ -43,7 +48,7 @@ export default {
     };
   },
   methods: {
-    onSubmit() {
+    async onSubmit() {
       if (this.loading) {
         return;
       }
@@ -53,13 +58,15 @@ export default {
         return;
       }
       this.loading = true;
-      this.$store.dispatch('login', this.username).then(() => {
+
+      try {
+        await this.$store.dispatch('login', this.username);
         this.$router.push('/');
-        this.loading = false;
-      }).catch((error) => {
-        this.error = error.message;
-        this.loading = false;
-      });
+      } catch (e) {
+        this.error = e.message;
+      }
+
+      this.loading = false;
     },
   },
 };

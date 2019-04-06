@@ -1,10 +1,8 @@
 <template>
   <div class="row">
-
     <sidebar></sidebar>
 
     <div class="col-md-8">
-
       <h1 class="my-4">
         <router-link to="/">My space</router-link>
         <small v-if="posts.length > 0">({{ posts.length }} posts published)</small>
@@ -30,13 +28,11 @@
 
             <button type="submit" class="btn btn-primary float-right">Submit</button>
           </form>
-
         </div>
       </div>
 
       <posts-list :posts="posts" v-show="!loading"></posts-list>
       <pulse-loader v-show="loading"></pulse-loader>
-
     </div>
   </div>
 </template>
@@ -73,16 +69,18 @@ export default {
     }
   },
   methods: {
-    getPosts() {
+    async getPosts() {
       this.loading = true;
-      const cachebuster = Math.round(new Date().getTime() / 1000);
-      const url = `http://jsonplaceholder.typicode.com/posts?userId=${this.user.id}&c=${cachebuster}`;
-      axios.get(url).then(({ data }) => {
+      const url = `http://jsonplaceholder.typicode.com/posts?userId=${this.user.id}`;
+      try {
+        const { data } = await axios.get(url);
         Vue.set(this, 'posts', data);
-        this.loading = false;
-      });
+      } catch (e) {
+        this.error = e.message;
+      }
+      this.loading = false;
     },
-    submitPost() {
+    async submitPost() {
       if (this.title === '' || this.body === '') {
         this.error = 'Title and body are required.';
         return;
@@ -96,14 +94,13 @@ export default {
         userId: this.user.id,
       };
 
-      axios.post(url, post)
-        .then(({ data }) => {
-          this.success = 'Post created.';
-          this.posts.unshift(data);
-        })
-        .catch(() => {
-          this.error = 'HTTP error.';
-        });
+      try {
+        const { data } = await axios.post(url, post);
+        this.success = 'Post created.';
+        this.posts.unshift(data);
+      } catch (e) {
+        this.error = e.message;
+      }
 
       Vue.set(this, 'newPost', {
         title: '',

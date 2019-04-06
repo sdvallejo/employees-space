@@ -7,13 +7,18 @@
 
         <template v-if="!showComments && comments.length > 0">
           <span class="badge badge-info">{{ comments.length }} comments</span>
-          <router-link :to="'/post/' + post.id" class="btn btn-primary float-right">Show comments &rarr;</router-link>
+          <router-link
+            :to="'/post/' + post.id"
+            class="btn btn-primary float-right"
+          >Show comments &rarr;</router-link>
         </template>
       </div>
     </div>
 
     <div v-if="showComments">
       <h4>Comments</h4>
+
+      <div class="alert alert-danger" v-if="error">{{ error }}</div>
 
       <comments-list :comments="comments" v-show="!loading"></comments-list>
       <pulse-loader v-show="loading"></pulse-loader>
@@ -39,19 +44,24 @@ export default {
   data() {
     return {
       comments: [],
+      error: null,
     };
   },
   created() {
     this.getComments();
   },
   methods: {
-    getComments() {
+    async getComments() {
       this.loading = true;
-      const url = `http://jsonplaceholder.typicode.com/posts/${this.post.id}/comments`;
-      axios.get(url).then(({ data }) => {
+      const url = `http://jsonplaceholder.typicode.com/comments?postId=${this.post.id}`;
+      try {
+        const { data } = await axios.get(url);
         this.comments = data;
-        this.loading = false;
-      });
+      } catch (e) {
+        this.error = e.message;
+      }
+
+      this.loading = false;
     },
   },
 };
